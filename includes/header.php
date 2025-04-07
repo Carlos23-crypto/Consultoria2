@@ -5,7 +5,6 @@
   </div>
   
   <nav class="nav-menu">
-    <button class="nav-button" id="registerBtn">Registrar</button>
     <?php
       $currentPage = basename($_SERVER['PHP_SELF']);
       $navItems = [

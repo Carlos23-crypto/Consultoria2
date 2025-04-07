@@ -8,6 +8,7 @@
   <!-- Estilos globales (siempre se cargan) -->
   <link rel="stylesheet" href="assets/css/styles.css">
   <link rel="stylesheet" href="assets/css/header.css">
+  <link rel="stylesheet" href="assets/css/footer.css"> <!-- Aquí añades el footer -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <!-- Carga condicional de estilos específicos -->
