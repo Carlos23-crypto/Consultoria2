@@ -1,7 +1,7 @@
 <header class="header-container">
   <div class="logo-section">
     <img src="assets/img/Logo.jpg" alt="Logo" class="logo">
-    <h1 class="app-title"GQ-Services</h1>
+    <h1 class="app-title">GQ-Services</h1>
   </div>
   
   <nav class="nav-menu">
