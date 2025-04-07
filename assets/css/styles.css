@@ -1,0 +1,10 @@
+/* Estilos base */
+body {
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    line-height: 1.6;
+  }
+
+  /* Mantener los otros estilos que ya teníamos */
