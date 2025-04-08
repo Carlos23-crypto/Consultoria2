@@ -126,6 +126,24 @@ $teamMembers = [
             <?php endforeach; ?>
         </div>
     </div>
+    <!-- Redes Sociales adicionales -->
+    <div class="social-footer-section">
+        <h3 class="social-title">Síguenos en nuestras redes</h3>
+        <div class="social-footer-icons">
+            <a href="https://www.facebook.com/tupagina" target="_blank" class="social-icon">
+                <i class="fab fa-facebook-f"></i>
+                <span>Facebook</span>
+            </a>
+            <!--<a href="https://www.instagram.com/tucuenta" target="_blank" class="social-icon">
+                <i class="fab fa-instagram"></i>
+                <span>Instagram</span>
+            </a>-->
+            <a href="https://chat.whatsapp.com/Fit9Ce0aJMi074ZCe9Gjif" target="_blank" class="social-icon">
+                <i class="fab fa-whatsapp"></i>
+                <span>WhatsApp</span>
+            </a>
+        </div>
+    </div>
 </section>
 
 <?php include('includes/footer.php'); ?>
