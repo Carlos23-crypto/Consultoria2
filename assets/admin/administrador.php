@@ -1,6 +1,6 @@
 <?php
 include('includes/db.php'); // Incluir conexión a BD
-
+verificarAutenticacion(); // ¡Redirige si no está autenticado!
 // --- Insertar nuevo servicio (tu código existente) ---
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['nombre'])) {
     $nombre = $_POST['nombre'];
