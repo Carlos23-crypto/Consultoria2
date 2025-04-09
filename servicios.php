@@ -15,7 +15,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['comentario'])) {
     try {
         $stmt = $conn->prepare("INSERT INTO clientes (nombre, apellido_paterno, apellido_materno, comentario, fecha) VALUES (?, ?, ?, ?, ?)");
         $stmt->execute([$nombre, $apellido_paterno, $apellido_materno, $comentario, $fecha]);
-        
+
         $mensajeExito = "¡Gracias por tu comentario!";
     } catch(PDOException $e) {
         $mensajeError = "Error al guardar el comentario: " . $e->getMessage();
@@ -25,26 +25,35 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['comentario'])) {
 
 <main class="main-container">
     <h1 class="page-title">Nuestros Servicios</h1>
-    
-    <!-- Contenedor de servicios existente (sin cambios) -->
+
+    <!-- Contenedor de servicios -->
     <div class="services-grid">
         <?php
         try {
             $stmt = $conn->query("SELECT nombre, descripcion, link FROM servicios");
             $servicios = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            
+
             if(count($servicios) > 0) {
                 foreach($servicios as $servicio) {
+                    $videoID = $servicio['link'];
+                    $embedUrl = "https://drive.google.com/file/d/{$videoID}/preview";
+                    $videoUrl = "http://localhost/WEB/ver_video.php?id=" . urlencode($videoID);
+                    //https://drive.google.com/file/d/1Rh5b3GPIbeaOYXsB1ea95Tm45FudzTNO/preview
                     echo '
                     <div class="service-card">
-                        <h3>'.htmlspecialchars($servicio['nombre']).'</h3>
+                        <h3>' . htmlspecialchars($servicio['nombre']) . '</h3>
                         <div class="service-description">
-                            <p>'.nl2br(htmlspecialchars($servicio['descripcion'])).'</p>
-                        </div>
-                        <button class="video-btn" data-video-url="'.htmlspecialchars($servicio['link']).'">
-                            Ver Video Explicativo
-                        </button>
-                    </div>';
+                            <p>' . nl2br(htmlspecialchars($servicio['descripcion'])) . '</p>
+                        </div>';
+
+                    if (!empty($videoID)) {
+                        echo '
+                        <a href="' . $videoUrl . '" target="_blank">
+                            <button class="video-btn">Ver Video Explicativo</button>
+                        </a>';
+                    }
+
+                    echo '</div>';
                 }
             } else {
                 echo '<p class="no-results">No hay servicios disponibles aún.</p>';
@@ -58,45 +67,75 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['comentario'])) {
     <!-- Nuevo formulario de comentarios -->
     <section class="comment-section">
         <h2>Deja tu comentario</h2>
-        
+
         <?php if (isset($mensajeExito)): ?>
             <div class="alert success"><?= $mensajeExito ?></div>
         <?php elseif (isset($mensajeError)): ?>
             <div class="alert error"><?= $mensajeError ?></div>
         <?php endif; ?>
-        
+
         <form method="POST" class="comment-form">
             <div class="form-group">
                 <label for="nombre">Nombre:</label>
-                <input type="text" id="nombre" name="nombre" required>
+                <input type="text" id="nombre" name="nombre" required class="form-group form-group-full">
             </div>
-            
+
             <div class="form-group">
                 <label for="apellido_paterno">Apellido Paterno:</label>
-                <input type="text" id="apellido_paterno" name="apellido_paterno">
+                <input type="text" id="apellido_paterno" name="apellido_paterno" class="form-group form-group-full">
             </div>
-            
+
             <div class="form-group">
                 <label for="apellido_materno">Apellido Materno:</label>
-                <input type="text" id="apellido_materno" name="apellido_materno">
+                <input type="text" id="apellido_materno" name="apellido_materno" class="form-group form-group-full">
             </div>
-            
+
             <div class="form-group">
                 <label for="comentario">Comentario:</label>
-                <textarea id="comentario" name="comentario" rows="4" required></textarea>
+                <textarea id="comentario" name="comentario" rows="4" required class="form-group form-group-full"></textarea>
             </div>
-            
+
             <button type="submit" class="submit-btn">Enviar Comentario</button>
         </form>
     </section>
 </main>
 
-<!-- Modal para videos (existente) -->
+<!-- Modal para videos 
 <div id="videoModal" class="modal">
     <div class="modal-content">
         <span class="close-modal">&times;</span>
         <iframe id="videoFrame" width="560" height="315" frameborder="0" allowfullscreen></iframe>
     </div>
-</div>
+</div> -->
 
 <?php include('includes/footer.php'); ?>
+
+<!-- Script para manejar el modal y cargar el video -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const videoButtons = document.querySelectorAll('.video-btn');
+    const videoModal = document.getElementById('videoModal');
+    const videoFrame = document.getElementById('videoFrame');
+    const closeModal = document.querySelector('.close-modal');
+
+    videoButtons.forEach(button => {
+        button.addEventListener('click', function () {
+            const videoUrl = this.getAttribute('data-video-url');
+            videoFrame.src = videoUrl;
+            videoModal.style.display = 'block';
+        });
+    });
+
+    closeModal.addEventListener('click', function () {
+        videoModal.style.display = 'none';
+        videoFrame.src = ''; // Limpiar para detener el video
+    });
+
+    window.addEventListener('click', function (event) {
+        if (event.target === videoModal) {
+            videoModal.style.display = 'none';
+            videoFrame.src = '';
+        }
+    });
+});
+</script>
