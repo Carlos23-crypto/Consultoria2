@@ -1,21 +1,30 @@
 <?php
-session_start();
+function iniciarSesionSegura() {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+}
 
-// Verifica si el usuario está autenticado
 function verificarAutenticacion() {
-    if (!isset($_SESSION['autenticado']) || $_SESSION['autenticado'] !== true) {
-        header("Location: ../admin/login.php");
+    iniciarSesionSegura();
+    
+    if (!isset($_SESSION['autenticado'])) {
+        header("Location: login.php");
         exit;
     }
 }
 
-// Valida credenciales (ejemplo básico - ideal usar DB)
-function autenticar($usuario, $contrasena) {
-    // Ejemplo: usuario "admin" / contraseña "123" (¡Cambia esto en producción!)
-    if ($usuario === 'admin' && $contrasena === '123') {
+function autenticar($conn, $usuario, $contrasena) {
+    iniciarSesionSegura();
+    
+    $stmt = $conn->prepare("SELECT id, contrasenia FROM administradores WHERE nombre_usuario = ?");
+    $stmt->execute([$usuario]);
+    $admin = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($admin && $contrasena === $admin['contrasenia']) {
         $_SESSION['autenticado'] = true;
+        $_SESSION['admin_id'] = $admin['id'];
         return true;
     }
     return false;
 }
-?>
