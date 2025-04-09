@@ -1,12 +1,11 @@
 <?php
-require_once __DIR__ . '/../includes/auth.php';
+session_start();
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/auth.php';
 
-iniciarSesionSegura();
-
-// Si ya está autenticado, redirigir al panel
-if (isset($_SESSION['autenticado'])) {
-    header("Location: administrador.php");
+// Verificar primero el código de acceso
+if (!isset($_SESSION['codigo_verificado'])) {
+    header("Location: ../../index.php?error=verifica_codigo_primero");
     exit;
 }
 
