@@ -24,28 +24,46 @@ $stmt = $conn->prepare("SELECT * FROM servicios WHERE id = ?");
 $stmt->execute([$id]);
 $servicio = $stmt->fetch(PDO::FETCH_ASSOC);
 
+// Convertir URL almacenada a solo ID para mostrarla en el formulario
+if ($servicio && !empty($servicio['link'])) {
+    $servicio['link'] = extractYouTubeId($servicio['link']);
+}
+
 if (!$servicio) {
     header("Location: administrador.php?error=servicio_no_encontrado");
     exit;
 }
 
+// Función para extraer ID de YouTube de una URL
+function extractYouTubeId($url) {
+    if (preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/)|youtu\.be\/)([0-9a-z_-]{11})/i', $url, $matches)) {
+        return $matches[1];
+    }
+    return $url; // Si no es URL, asumimos que ya es un ID
+}
+
 // ==============================================
 // PROCESAR ACTUALIZACIÓN
 // ==============================================
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $nombre = htmlspecialchars($_POST['nombre'] ?? '');
     $descripcion = htmlspecialchars($_POST['descripcion'] ?? '');
-    $link = htmlspecialchars($_POST['link'] ?? '');
+    $video_id = trim(htmlspecialchars($_POST['link'] ?? ''));
 
     try {
         // Validaciones
-        if (empty($nombre) || empty($link)) {
-            throw new Exception("Nombre y link son campos obligatorios.");
+        if (empty($nombre) || empty($video_id)) {
+            throw new Exception("Nombre e ID del video son campos obligatorios.");
         }
 
-        if (!filter_var($link, FILTER_VALIDATE_URL)) {
-            throw new Exception("El link debe ser una URL válida.");
+        // Validar formato del ID de YouTube (11 caracteres alfanuméricos)
+        if (!preg_match('/^[0-9a-z_-]{11}$/i', $video_id)) {
+            throw new Exception("El ID del video debe tener exactamente 11 caracteres alfanuméricos (ejemplo: am21eumHG6w)");
         }
+
+        // Aquí solo guardamos el ID del video, no la URL completa
+        $link = $video_id;  // Solo almacenamos el ID del video (no la URL completa)
 
         // Actualizar en la base de datos
         $stmt = $conn->prepare("UPDATE servicios SET nombre = ?, descripcion = ?, link = ? WHERE id = ?");
@@ -66,8 +84,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 }
 
+
 // ==============================================
-// VISTA HTML
+// VISTA HTML (MODIFICADA PARA MOSTRAR SOLO EL ID)
 // ==============================================
 ?>
 <!DOCTYPE html>
@@ -77,7 +96,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editar Servicio</title>
     <style>
-        /* Usa los mismos estilos que administrador.php */
+        /* Estilos anteriores se mantienen igual */
         :root {
             --color-exito: #d4edda;
             --color-error: #f8d7da;
@@ -170,6 +189,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             background: var(--color-error);
             color: var(--color-texto-error);
         }
+        
+        .video-id-example {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
@@ -197,8 +222,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 </div>
                 
                 <div class="formulario-grupo">
-                    <label for="link">Link (URL):</label>
-                    <input type="url" name="link" value="<?= htmlspecialchars($servicio['link']) ?>" placeholder="https://ejemplo.com" required>
+                    <label for="link">ID del Video de YouTube:</label>
+                    <input type="text" name="link" value="<?= htmlspecialchars($servicio['link']) ?>" 
+                           placeholder="Ejemplo: am21eumHG6w" required
+                           pattern="[0-9a-zA-Z_-]{11}" 
+                           title="11 caracteres alfanuméricos (puede incluir guiones y guiones bajos)">
+                    <div class="video-id-example">
+                        Solo ingresa el ID del video (ejemplo: am21eumHG6w)<br>
+                        El sistema convertirá automáticamente a formato embebido
+                    </div>
                 </div>
                 
                 <button type="submit" class="boton">Guardar Cambios</button>

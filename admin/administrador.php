@@ -31,10 +31,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['nombre'])) {
             throw new Exception("Nombre y link son campos obligatorios.");
         }
 
-        // Validación de URL
+        /* Validación de URL
         if (!filter_var($link, FILTER_VALIDATE_URL)) {
             throw new Exception("El link debe ser una URL válida.");
-        }
+        }*/
 
         $sql = "INSERT INTO servicios (nombre, descripcion, link) VALUES (:nombre, :descripcion, :link)";
         $stmt = $conn->prepare($sql);
