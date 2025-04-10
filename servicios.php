@@ -15,7 +15,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['comentario'])) {
     try {
         $stmt = $conn->prepare("INSERT INTO clientes (nombre, apellido_paterno, apellido_materno, comentario, fecha) VALUES (?, ?, ?, ?, ?)");
         $stmt->execute([$nombre, $apellido_paterno, $apellido_materno, $comentario, $fecha]);
-
         $mensajeExito = "¡Gracias por tu comentario!";
     } catch(PDOException $e) {
         $mensajeError = "Error al guardar el comentario: " . $e->getMessage();
@@ -26,19 +25,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['comentario'])) {
 <main class="main-container">
     <h1 class="page-title">Nuestros Servicios</h1>
 
-    <!-- Contenedor de servicios -->
     <div class="services-grid">
         <?php
         try {
             $stmt = $conn->query("SELECT nombre, descripcion, link FROM servicios");
             $servicios = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            if(count($servicios) > 0) {
-                foreach($servicios as $servicio) {
-                    $videoID = $servicio['link'];
-                    $embedUrl = "https://drive.google.com/file/d/{$videoID}/preview";
-                    $videoUrl = "http://localhost/WEB/ver_video.php?id=" . urlencode($videoID);
-                    //https://drive.google.com/file/d/1Rh5b3GPIbeaOYXsB1ea95Tm45FudzTNO/preview
+            if (count($servicios) > 0) {
+                foreach ($servicios as $servicio) {
+                    $videoID = trim($servicio['link']); // Limpiamos posibles saltos de línea
+
                     echo '
                     <div class="service-card">
                         <h3>' . htmlspecialchars($servicio['nombre']) . '</h3>
@@ -48,9 +44,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['comentario'])) {
 
                     if (!empty($videoID)) {
                         echo '
-                        <a href="' . $videoUrl . '" target="_blank">
-                            <button class="video-btn">Ver Video Explicativo</button>
-                        </a>';
+                        <button class="video-btn" data-video-id="' . htmlspecialchars($videoID) . '">
+                            Ver Video Explicativo
+                        </button>';
                     }
 
                     echo '</div>';
@@ -58,13 +54,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['comentario'])) {
             } else {
                 echo '<p class="no-results">No hay servicios disponibles aún.</p>';
             }
-        } catch(PDOException $e) {
-            echo '<p class="error">Error al cargar servicios: '.$e->getMessage().'</p>';
+        } catch (PDOException $e) {
+            echo '<p class="error">Error al cargar servicios: ' . $e->getMessage() . '</p>';
         }
         ?>
     </div>
 
-    <!-- Nuevo formulario de comentarios -->
+
+    <!-- Sección de comentarios -->
     <section class="comment-section">
         <h2>Deja tu comentario</h2>
 
@@ -77,22 +74,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['comentario'])) {
         <form method="POST" class="comment-form">
             <div class="form-group">
                 <label for="nombre">Nombre:</label>
-                <input type="text" id="nombre" name="nombre" required class="form-group form-group-full">
+                <input type="text" id="nombre" name="nombre" required>
             </div>
 
             <div class="form-group">
                 <label for="apellido_paterno">Apellido Paterno:</label>
-                <input type="text" id="apellido_paterno" name="apellido_paterno" class="form-group form-group-full">
+                <input type="text" id="apellido_paterno" name="apellido_paterno">
             </div>
 
             <div class="form-group">
                 <label for="apellido_materno">Apellido Materno:</label>
-                <input type="text" id="apellido_materno" name="apellido_materno" class="form-group form-group-full">
+                <input type="text" id="apellido_materno" name="apellido_materno">
             </div>
 
             <div class="form-group">
                 <label for="comentario">Comentario:</label>
-                <textarea id="comentario" name="comentario" rows="4" required class="form-group form-group-full"></textarea>
+                <textarea id="comentario" name="comentario" rows="4" required></textarea>
             </div>
 
             <button type="submit" class="submit-btn">Enviar Comentario</button>
@@ -100,42 +97,83 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['comentario'])) {
     </section>
 </main>
 
-<!-- Modal para videos 
-<div id="videoModal" class="modal">
-    <div class="modal-content">
-        <span class="close-modal">&times;</span>
-        <iframe id="videoFrame" width="560" height="315" frameborder="0" allowfullscreen></iframe>
+<!-- Modal para videos de YouTube -->
+<div id="videoModal" class="modal" style="display:none; justify-content:center; align-items:center; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.6); z-index:1000;">
+    <div class="modal-content" style="position:relative; width:90%; max-width:800px; background:#fff; padding:1rem; border-radius:8px;">
+        <span class="close-modal" style="position:absolute; top:10px; right:20px; font-size:1.5rem; cursor:pointer;">&times;</span>
+        <iframe id="videoFrame" width="100%" height="450" frameborder="0" allowfullscreen></iframe>
     </div>
-</div> -->
+</div>
 
-<?php include('includes/footer.php'); ?>
-
-<!-- Script para manejar el modal y cargar el video -->
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const videoButtons = document.querySelectorAll('.video-btn');
-    const videoModal = document.getElementById('videoModal');
+    const modal = document.getElementById('videoModal');
     const videoFrame = document.getElementById('videoFrame');
-    const closeModal = document.querySelector('.close-modal');
+    const closeBtn = document.querySelector('.close-modal');
+    const videoBtns = document.querySelectorAll('.video-btn');
 
-    videoButtons.forEach(button => {
-        button.addEventListener('click', function () {
-            const videoUrl = this.getAttribute('data-video-url');
-            videoFrame.src = videoUrl;
-            videoModal.style.display = 'block';
+    videoBtns.forEach(btn => {
+        btn.addEventListener('click', function () {
+            const videoID = this.getAttribute('data-video-id');
+            if (!videoID || videoID === "null") {
+                alert("Video no disponible");
+                return;
+            }
+
+            const embedUrl = `https://www.youtube.com/embed/${videoID}`;
+            videoFrame.src = embedUrl;
+            modal.style.display = 'flex';
         });
     });
 
-    closeModal.addEventListener('click', function () {
-        videoModal.style.display = 'none';
-        videoFrame.src = ''; // Limpiar para detener el video
+    closeBtn.addEventListener('click', function () {
+        modal.style.display = 'none';
+        videoFrame.src = '';
     });
 
-    window.addEventListener('click', function (event) {
-        if (event.target === videoModal) {
-            videoModal.style.display = 'none';
+    window.addEventListener('click', function (e) {
+        if (e.target === modal) {
+            modal.style.display = 'none';
             videoFrame.src = '';
         }
     });
 });
 </script>
+
+
+<!-- Estilos básicos para el modal -->
+<style>
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: #fff;
+    padding: 1rem;
+    border-radius: 8px;
+    max-width: 90%;
+    max-height: 90%;
+    overflow: auto;
+    position: relative;
+}
+
+.close-modal {
+    position: absolute;
+    top: 0.5rem;
+    right: 1rem;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+#videoFrame {
+    width: 100%;
+    height: 400px;
+}
+</style>

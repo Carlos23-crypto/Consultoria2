@@ -6,12 +6,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Abrir modal con el link directo (ya viene listo desde PHP)
     videoBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            const videoUrl = this.getAttribute('data-video-url');
+        btn.addEventListener('click', function () {
+            const videoID = this.getAttribute('data-video-id');
+            if (!videoID) {
+                alert("Video no disponible");
+                return;
+            }
+    
+            const videoUrl = `https://www.youtube.com/embed/${videoID}`;
             videoFrame.src = videoUrl;
             modal.style.display = 'flex';
         });
     });
+    
 
     // Cerrar modal
     closeBtn.addEventListener('click', function() {
